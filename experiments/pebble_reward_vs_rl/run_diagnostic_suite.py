@@ -79,8 +79,13 @@ def run_one(
             stderr=subprocess.STDOUT,
         )
     elapsed = time.time() - t0
-    if proc.returncode == 0 and is_complete(env, cond, seed, steps):
-        return tag, 0, f"done ({elapsed/60:.1f} min)"
+    # Prefer on-disk completion over process rc. (macOS bash previously returned
+    # 127 after a successful train due to a launcher quoting bug; data was fine.)
+    if is_complete(env, cond, seed, steps):
+        note = f"done ({elapsed/60:.1f} min)"
+        if proc.returncode not in (0, None):
+            note += f" [rc={proc.returncode} ignored — diagnostics complete]"
+        return tag, 0, note
     return tag, proc.returncode or 1, f"FAIL rc={proc.returncode} log={log_path}"
 
 

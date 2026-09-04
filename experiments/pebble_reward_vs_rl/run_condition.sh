@@ -45,14 +45,31 @@ case "$CONDITION" in
 esac
 
 export PYTHONPATH="${ROOT}:${ROOT}/custom_dmc2gym:${PYTHONPATH:-}"
+export PYTHONUNBUFFERED=1
+
+# Prefer project venv; fall back to PATH python.
+if [[ -x "${ROOT}/.venv/bin/python" ]]; then
+  PY="${ROOT}/.venv/bin/python"
+else
+  PY="python"
+fi
 
 echo "[run] condition=$CONDITION device=$DEVICE seed=$SEED steps=$STEPS env=$ENV"
 echo "[run] REMINDER: smoke ≠ diagnostic ≠ paper-scale (CLAIM.md §6)"
 
-python experiments/pebble_reward_vs_rl/train_pebble_diagnostics.py \
-  device="$DEVICE" \
-  seed="$SEED" \
-  num_train_steps="$STEPS" \
-  env="$ENV" \
-  "${EXTRA[@]}" \
-  "$@"
+# Build argv in an array so macOS bash 3.2 never re-parses EXTRA as commands
+# after the python process exits (previous `"$@"` / line-continuation footgun → rc 127).
+ARGS=(
+  experiments/pebble_reward_vs_rl/train_pebble_diagnostics.py
+  "device=${DEVICE}"
+  "seed=${SEED}"
+  "num_train_steps=${STEPS}"
+  "env=${ENV}"
+)
+ARGS+=("${EXTRA[@]}")
+# Forward caller overrides only when present (avoids set -u / empty "$@" issues).
+if [[ $# -gt 0 ]]; then
+  ARGS+=("$@")
+fi
+
+exec "$PY" "${ARGS[@]}"

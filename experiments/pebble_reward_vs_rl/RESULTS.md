@@ -14,8 +14,8 @@ Do not paste single-seed anecdotes here as findings.
 |-------|-------|
 | Setup / instrument | Complete |
 | Smoke (wiring) | Complete (archived under `exp/_smoke_archive/`) |
-| Diagnostic (5×4×100k Walker) | **In progress** — see `exp/_logs/` |
-| Paper-scale (10×4×≥500k) | Not started (needs CUDA; CPU ≈ multi-day) |
+| Diagnostic (5×4×100k Walker) | **In progress locally (3/20 done)**; **run to completion on Colab A100** via `colab_a100.ipynb` |
+| Paper-scale (10×4×≥500k) | Use Colab A100 Cell 8 (`run_paper_scale_suite.py`) |
 | Conclusion justified | **No** |
 
 ---

@@ -49,20 +49,27 @@ Repo dependency outside this folder: `replay_buffer.py` stores `true_rewards` fo
 
 ## How to run
 
-From `repos/BPref` (venv active):
+### Google Colab (A100) — recommended
+
+1. Open: [colab_a100.ipynb](https://colab.research.google.com/github/thatrandomasiandev/BPref/blob/main/experiments/pebble_reward_vs_rl/colab_a100.ipynb)
+2. **Runtime → Change runtime type → GPU → A100**
+3. Run all cells (Drive mount on → diagnostic → optional paper-scale)
+
+Notebook path in-repo: `experiments/pebble_reward_vs_rl/colab_a100.ipynb`
+
+### Local (from BPref repo root, venv active)
 
 ```bash
 # Wiring smoke (all four conditions) — NOT a finding
 DEVICE=cpu bash experiments/pebble_reward_vs_rl/run_smoke_all.sh
 
 # Diagnostic (tentative patterns only): 5 seeds × 100k
-DEVICE=cpu STEPS=100000 SEEDS="1 2 3 4 5" \
-  bash experiments/pebble_reward_vs_rl/run_all.sh
+DEVICE=cpu PARALLEL=3 STEPS=100000 SEEDS="1 2 3 4 5" \
+  python experiments/pebble_reward_vs_rl/run_diagnostic_suite.py
 
-# Paper-scale (CLAIM.md claim gate): 10 seeds × ≥500k
-DEVICE=cuda STEPS=500000 SEEDS="1 2 3 4 5 6 7 8 9 10" \
-  bash experiments/pebble_reward_vs_rl/run_all.sh \
-  reward_batch=128 reward_update=200 num_eval_episodes=10
+# Paper-scale (CLAIM.md claim gate): 10 seeds × ≥500k — prefer CUDA/A100
+DEVICE=cuda PARALLEL=1 \
+  python experiments/pebble_reward_vs_rl/run_paper_scale_suite.py
 
 # Aggregate
 python experiments/pebble_reward_vs_rl/analyze_results.py \

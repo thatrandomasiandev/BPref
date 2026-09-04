@@ -51,6 +51,8 @@ src
 MUJOCO_LOG.TXT
 exp/
 *.ipynb
+!experiments/pebble_reward_vs_rl/colab_a100.ipynb
+!colab_pebble.ipynb
 test_scripts/*
 *.pdf
 figures

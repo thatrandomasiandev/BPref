@@ -24,6 +24,8 @@ keys/
 # Virtualenv
 /env
 /venv
+.venv/
+venv/
 
 
 *.sublime-project
@@ -55,3 +57,4 @@ figures
 *.txt
 figure/
 data/
+*.log

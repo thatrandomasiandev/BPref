@@ -29,7 +29,7 @@ class Workspace(object):
             self.work_dir,
             save_tb=cfg.log_save_tb,
             log_frequency=cfg.log_frequency,
-            agent=cfg.agent.name)
+            agent='sac')
 
         utils.set_seed_everywhere(cfg.seed)
         self.device = torch.device(cfg.device)
@@ -42,13 +42,13 @@ class Workspace(object):
         else:
             self.env = utils.make_env(cfg)
         
-        cfg.agent.params.obs_dim = self.env.observation_space.shape[0]
-        cfg.agent.params.action_dim = self.env.action_space.shape[0]
-        cfg.agent.params.action_range = [
+        cfg.agent.obs_dim = self.env.observation_space.shape[0]
+        cfg.agent.action_dim = self.env.action_space.shape[0]
+        cfg.agent.action_range = [
             float(self.env.action_space.low.min()),
             float(self.env.action_space.high.max())
         ]
-        self.agent = hydra.utils.instantiate(cfg.agent)
+        self.agent = hydra.utils.instantiate(cfg.agent, _recursive_=False)
 
         self.replay_buffer = ReplayBuffer(
             self.env.observation_space.shape,
@@ -84,7 +84,7 @@ class Workspace(object):
         success_rate = 0
         
         for episode in range(self.cfg.num_eval_episodes):
-            obs = self.env.reset()
+            obs = utils.env_reset(self.env)
             self.agent.reset()
             done = False
             episode_reward = 0
@@ -95,7 +95,7 @@ class Workspace(object):
             while not done:
                 with utils.eval_mode(self.agent):
                     action = self.agent.act(obs, sample=False)
-                obs, reward, done, extra = self.env.step(action)
+                obs, reward, done, extra = utils.env_step(self.env, action)
                 
                 episode_reward += reward
                 true_episode_reward += reward
@@ -200,7 +200,7 @@ class Workspace(object):
                     self.logger.log('train/true_episode_success', episode_success,
                         self.step)
                 
-                obs = self.env.reset()
+                obs = utils.env_reset(self.env)
                 self.agent.reset()
                 done = False
                 episode_reward = 0
@@ -290,7 +290,7 @@ class Workspace(object):
                 self.agent.update_state_ent(self.replay_buffer, self.logger, self.step, 
                                             gradient_update=1, K=self.cfg.topK)
                 
-            next_obs, reward, done, extra = self.env.step(action)
+            next_obs, reward, done, extra = utils.env_step(self.env, action)
             reward_hat = self.reward_model.r_hat(np.concatenate([obs, action], axis=-1))
 
             # allow infinite bootstrap
@@ -316,7 +316,7 @@ class Workspace(object):
         self.agent.save(self.work_dir, self.step)
         self.reward_model.save(self.work_dir, self.step)
         
-@hydra.main(config_path='config/train_PEBBLE.yaml', strict=True)
+@hydra.main(version_base=None, config_path='config', config_name='train_PEBBLE')
 def main(cfg):
     workspace = Workspace(cfg)
     workspace.run()

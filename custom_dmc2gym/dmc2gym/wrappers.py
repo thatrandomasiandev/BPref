@@ -8,7 +8,7 @@ import numpy as np
 def _spec_to_box(spec):
     def extract_min_max(s):
         assert s.dtype == np.float64 or s.dtype == np.float32
-        dim = np.int(np.prod(s.shape))
+        dim = int(np.prod(s.shape))
         if type(s) == specs.Array:
             bound = np.inf * np.ones(dim, dtype=np.float32)
             return -bound, bound
@@ -29,7 +29,7 @@ def _spec_to_box(spec):
 def _spec_to_box_manipulation(spec):
     def extract_min_max(s):
         assert s.dtype == np.float64 or s.dtype == np.float32
-        dim = np.int(np.prod(s.shape))
+        dim = int(np.prod(s.shape))
         if type(s) == specs.Array:
             bound = np.inf * np.ones(dim, dtype=np.float32)
             return -bound, bound
@@ -220,15 +220,22 @@ class Custom_DMCWrapper(core.Env):
         else:
             self.current_state = _flatten_obs(time_step.observation)
         extra['discount'] = time_step.discount
-        return obs, reward, done, extra
+        terminated = bool(done)
+        return obs, reward, terminated, False, extra
 
-    def reset(self):
+    def reset(self, *, seed=None, options=None):
+        if seed is not None:
+            self.seed(seed=seed)
         time_step = self._env.reset()
         if self._flag_manipulation:
             self.current_state = _flatten_obs_manipulation(time_step.observation)
         else:
             self.current_state = _flatten_obs(time_step.observation)
         obs = self._get_obs(time_step)
+        return obs, {}
+
+    def reset_legacy(self):
+        obs, _ = self.reset()
         return obs
 
     def render(self, mode='rgb_array', height=None, width=None, camera_id=0):

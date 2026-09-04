@@ -6,8 +6,6 @@ import os
 import random
 import math
 import dmc2gym
-import metaworld
-import metaworld.envs.mujoco.env_dict as _env_dict
 
 from collections import deque
 from gym.wrappers.time_limit import TimeLimit
@@ -17,6 +15,26 @@ from skimage.util.shape import view_as_windows
 from torch import nn
 from torch import distributions as pyd
     
+def env_reset(env, seed=None):
+    if seed is not None:
+        result = env.reset(seed=seed)
+    else:
+        result = env.reset()
+    if isinstance(result, tuple):
+        obs, _ = result
+        return obs
+    return result
+
+
+def env_step(env, action):
+    result = env.step(action)
+    if len(result) == 5:
+        obs, reward, terminated, truncated, info = result
+        done = terminated or truncated
+        return obs, reward, done, info
+    return result
+
+
 def make_env(cfg):
     """Helper function to create dm_control environment"""
     if cfg.env == 'ball_in_cup_catch':
@@ -30,7 +48,7 @@ def make_env(cfg):
                        task_name=task_name,
                        seed=cfg.seed,
                        visualize_reward=False)
-    env.seed(cfg.seed)
+    env_reset(env, seed=cfg.seed)
     assert env.action_space.low.min() >= -1
     assert env.action_space.high.max() <= 1
 
@@ -61,6 +79,8 @@ def tie_weights(src, trg):
     trg.bias = src.bias
     
 def make_metaworld_env(cfg):
+    import metaworld
+    import metaworld.envs.mujoco.env_dict as _env_dict
     env_name = cfg.env.replace('metaworld_','')
     if env_name in _env_dict.ALL_V2_ENVIRONMENTS:
         env_cls = _env_dict.ALL_V2_ENVIRONMENTS[env_name]
@@ -76,6 +96,8 @@ def make_metaworld_env(cfg):
     return TimeLimit(NormalizedBoxEnv(env), env.max_path_length)
 
 def ppo_make_metaworld_env(env_id, seed):
+    import metaworld
+    import metaworld.envs.mujoco.env_dict as _env_dict
     env_name = env_id.replace('metaworld_','')
     if env_name in _env_dict.ALL_V2_ENVIRONMENTS:
         env_cls = _env_dict.ALL_V2_ENVIRONMENTS[env_name]

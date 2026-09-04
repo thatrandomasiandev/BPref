@@ -1,0 +1,121 @@
+# @package _global_
+# =============================================================================
+# PEBBLE-native diagnostics (Lee et al., ICML 2021 — arXiv:2106.05091)
+#
+# Question: when true return drops under paper ablations (Fig. 5a / Fig. 3),
+# is it H1 (reward-model ranking) or H2 (SAC amplification)?
+#
+# Teacher: scripted Oracle only (§5.1). Not B-Pref.
+#
+# Conditions (via run_*.sh):
+#   full         — relabel ✓, pretrain 10k, max_feedback 1400
+#   no_relabel   — relabel ✗, pretrain 10k, max_feedback 1400   (Fig. 5a)
+#   no_pretrain  — relabel ✓, pretrain 0,   max_feedback 1400   (Fig. 5a)
+#   low_budget   — relabel ✓, pretrain 10k, max_feedback 400    (Fig. 3)
+#
+# Defaults below are *diagnostic-scale* (faster iteration). Paper-scale:
+#   num_train_steps=500000  (or 1e6), reward_batch≈128, reward_update≈200,
+#   num_eval_episodes=10, feed_type=2 (entropy; paper default).
+# =============================================================================
+
+defaults:
+  - _self_
+
+experiment: PEBBLE_reward_vs_rl
+pebble_condition: full          # full | no_relabel | no_pretrain | low_budget
+do_relabel: true                # set false for no_relabel (also forced in code)
+
+# ----- reward learning (paper defaults where noted) -----
+segment: 50                     # paper Fig. 5c uses H=50
+activation: tanh
+num_seed_steps: 1000
+num_unsup_steps: 10000          # paper §5.1: 10K pre-train (included in curves)
+num_interact: 5000
+reward_lr: 0.0003
+reward_batch: 40                # raise toward 128 for paper-scale
+reward_update: 50               # raise toward 200 for paper-scale
+feed_type: 2                    # 2=entropy (paper default); 0=uniform
+reset_update: 100
+topK: 5
+ensemble_size: 3                # paper: 3
+max_feedback: 1400              # paper locomotion high budget
+large_batch: 10
+label_margin: 0.0
+
+# Oracle teacher (paper §5.1) — DO NOT set mistake / soft-beta here
+teacher_beta: -1
+teacher_gamma: 1.0
+teacher_eps_mistake: 0.0
+teacher_eps_skip: 0.0
+teacher_eps_equal: 0.0
+
+reward_schedule: 0
+
+# ----- training budget (diagnostic scale; raise for confirmation) -----
+num_train_steps: 100000
+replay_buffer_capacity: ${num_train_steps}
+
+# ----- evaluation -----
+eval_frequency: 10000
+num_eval_episodes: 5
+device: cuda
+
+# ----- logging -----
+log_frequency: 10000
+log_save_tb: false
+save_video: false
+seed: 1
+env: walker_walk                # paper Fig. 3; optional: quadruped_walk for Fig. 5a
+gradient_update: 1
+
+# ----- diagnostics -----
+diag_holdout_pairs: 500
+diag_onpolicy_pairs: 256
+diag_onpolicy_recent_trajs: 20
+diag_probe_gradient_steps: 200
+diag_probe_eval_episodes: 3
+diag_probe_steps: [25000, 50000, 100000]
+
+# ----- SAC agent -----
+agent:
+  _target_: agent.sac.SACAgent
+  obs_dim: ???
+  action_dim: ???
+  action_range: ???
+  device: ${device}
+  critic_cfg: ${double_q_critic}
+  actor_cfg: ${diag_gaussian_actor}
+  discount: 0.99
+  init_temperature: 0.1
+  alpha_lr: 1.0e-4
+  alpha_betas: [0.9, 0.999]
+  actor_lr: 5.0e-4
+  actor_betas: [0.9, 0.999]
+  actor_update_frequency: 1
+  critic_lr: 5.0e-4
+  critic_betas: [0.9, 0.999]
+  critic_tau: 0.005
+  critic_target_update_frequency: 2
+  batch_size: 512
+  learnable_temperature: true
+
+double_q_critic:
+  _target_: agent.critic.DoubleQCritic
+  obs_dim: ${agent.obs_dim}
+  action_dim: ${agent.action_dim}
+  hidden_dim: 1024
+  hidden_depth: 2
+
+diag_gaussian_actor:
+  _target_: agent.actor.DiagGaussianActor
+  obs_dim: ${agent.obs_dim}
+  action_dim: ${agent.action_dim}
+  hidden_depth: 2
+  hidden_dim: 1024
+  log_std_bounds: [-5, 2]
+
+hydra:
+  job:
+    chdir: true
+  run:
+    dir: ${hydra:runtime.cwd}/experiments/pebble_reward_vs_rl/exp/${env}/${pebble_condition}/seed${seed}

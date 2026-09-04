@@ -1,0 +1,123 @@
+# @package _global_
+# =============================================================================
+# Hydra config — PEBBLE H1/H2 instrument (Lee et al., ICML 2021)
+#
+# Pre-registration: CLAIM.md
+# Primary PDF:      lee2021pebble.pdf
+#
+# Teacher: scripted Oracle only (§5.1). Do NOT set teacher_eps_mistake > 0.
+#
+# Conditions (set by run_*.sh — one factor vs `full`):
+#   full         relabel ✓  pretrain 10k  feedback 1400
+#   no_relabel   relabel ✗  pretrain 10k  feedback 1400   (Fig. 5a)
+#   no_pretrain  relabel ✓  pretrain 0    feedback 1400   (Fig. 5a)
+#   low_budget   relabel ✓  pretrain 10k  feedback 400    (Fig. 3)
+#
+# Defaults = DIAGNOSTIC scale (CLAIM.md §6). Paper-scale overrides:
+#   num_train_steps≥500000, reward_batch=128, reward_update=200,
+#   num_eval_episodes=10, 10 seeds.
+# Smoke / diagnostic / paper-scale — never confuse these for "a finding."
+# =============================================================================
+
+defaults:
+  - _self_
+
+experiment: PEBBLE_reward_vs_rl
+pebble_condition: full          # full | no_relabel | no_pretrain | low_budget
+do_relabel: true                # false for no_relabel (also forced in code)
+
+# ----- reward learning (paper-aligned where noted) -----
+segment: 50                     # Fig. 5c uses H=50 as the strong setting
+activation: tanh
+num_seed_steps: 1000            # random actions before SAC / explore
+num_unsup_steps: 10000          # paper §5.1: 10K pre-train
+num_interact: 5000              # steps between preference sessions (K)
+reward_lr: 0.0003
+reward_batch: 40                # raise → 128 for paper-scale
+reward_update: 50               # raise → 200 for paper-scale
+feed_type: 2                    # 2 = entropy (paper §5.1 default)
+reset_update: 100
+topK: 5                         # k-NN for state-entropy intrinsic reward
+ensemble_size: 3                # paper: 3
+max_feedback: 1400              # paper high locomotion budget
+large_batch: 10
+label_margin: 0.0
+
+# Oracle teacher (paper §5.1) — hard-enforced in train_pebble_diagnostics.py
+teacher_beta: -1
+teacher_gamma: 1.0
+teacher_eps_mistake: 0.0
+teacher_eps_skip: 0.0
+teacher_eps_equal: 0.0
+
+reward_schedule: 0
+
+# ----- training budget (diagnostic default; see CLAIM.md §6) -----
+num_train_steps: 100000
+replay_buffer_capacity: ${num_train_steps}
+
+# ----- evaluation -----
+eval_frequency: 10000
+num_eval_episodes: 5
+device: cuda
+
+# ----- logging -----
+log_frequency: 10000
+log_save_tb: false
+save_video: false
+seed: 1
+env: walker_walk                # Fig. 3; optional quadruped_walk for Fig. 5a
+gradient_update: 1
+
+# ----- diagnostics (CLAIM.md §4) -----
+diag_holdout_pairs: 500
+diag_onpolicy_pairs: 256
+diag_onpolicy_recent_trajs: 20
+diag_probe_gradient_steps: 200
+diag_probe_eval_episodes: 3
+# Quote on CLI under zsh: 'diag_probe_steps=[25000,50000,100000]'
+diag_probe_steps: [25000, 50000, 100000]
+
+# ----- SAC agent (inlined for a self-contained Hydra package) -----
+agent:
+  _target_: agent.sac.SACAgent
+  obs_dim: ???
+  action_dim: ???
+  action_range: ???
+  device: ${device}
+  critic_cfg: ${double_q_critic}
+  actor_cfg: ${diag_gaussian_actor}
+  discount: 0.99
+  init_temperature: 0.1
+  alpha_lr: 1.0e-4
+  alpha_betas: [0.9, 0.999]
+  actor_lr: 5.0e-4
+  actor_betas: [0.9, 0.999]
+  actor_update_frequency: 1
+  critic_lr: 5.0e-4
+  critic_betas: [0.9, 0.999]
+  critic_tau: 0.005
+  critic_target_update_frequency: 2
+  batch_size: 512
+  learnable_temperature: true
+
+double_q_critic:
+  _target_: agent.critic.DoubleQCritic
+  obs_dim: ${agent.obs_dim}
+  action_dim: ${agent.action_dim}
+  hidden_dim: 1024
+  hidden_depth: 2
+
+diag_gaussian_actor:
+  _target_: agent.actor.DiagGaussianActor
+  obs_dim: ${agent.obs_dim}
+  action_dim: ${agent.action_dim}
+  hidden_depth: 2
+  hidden_dim: 1024
+  log_std_bounds: [-5, 2]
+
+hydra:
+  job:
+    chdir: true                 # PEBBLE expects cwd == run dir for logs/ckpts
+  run:
+    dir: ${hydra:runtime.cwd}/experiments/pebble_reward_vs_rl/exp/${env}/${pebble_condition}/seed${seed}

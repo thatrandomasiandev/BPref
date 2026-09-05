@@ -112,6 +112,7 @@ Report **mean ± std across seeds**. Single-seed anecdotes are not findings.
 | 10 seeds, long horizon | Staged budgets | Claim gate requires paper-scale before conclusion |
 | reward_batch / updates in release code | Configurable; diagnostic smaller | Does not change Oracle teacher or ablation factors |
 | `no_pretrain` first query timing | `num_seed_steps=2000` (random only) | Walker episodes ≈1000 steps; PEBBLE needs ≥2 trajs before first query. This is **not** unsupervised pre-train (entropy SAC). Prefer `run_condition.sh` default. |
+| Colab system Python ≥3.12 | Bootstrap **Python 3.11** venv via `uv`; keep `gym==0.26.2` | openai/gym 0.26 often fails to build on 3.12+. We **do not** fall back to unpinned gym (API drift). See `colab_a100.ipynb` Cell 4. |
 
 ---
 

@@ -47,14 +47,17 @@ esac
 export PYTHONPATH="${ROOT}:${ROOT}/custom_dmc2gym:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
 
-# Prefer project venv; fall back to PATH python.
-if [[ -x "${ROOT}/.venv/bin/python" ]]; then
+# Prefer: (1) PEBBLE_PYTHON from Colab 3.11 venv, (2) project .venv, (3) PATH python.
+if [[ -n "${PEBBLE_PYTHON:-}" && -x "${PEBBLE_PYTHON}" ]]; then
+  PY="${PEBBLE_PYTHON}"
+elif [[ -x "${ROOT}/.venv/bin/python" ]]; then
   PY="${ROOT}/.venv/bin/python"
 else
   PY="python"
 fi
 
 echo "[run] condition=$CONDITION device=$DEVICE seed=$SEED steps=$STEPS env=$ENV"
+echo "[run] python=$PY"
 echo "[run] REMINDER: smoke ≠ diagnostic ≠ paper-scale (CLAIM.md §6)"
 
 # Build argv in an array so macOS bash 3.2 never re-parses EXTRA as commands

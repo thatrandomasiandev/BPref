@@ -7,7 +7,7 @@
 # This produces *tentative patterns only* — not a paper-scale claim.
 #
 # Usage:
-#   DEVICE=cpu PARALLEL=3 bash experiments/pebble_reward_vs_rl/run_diagnostic_suite.sh
+#   DEVICE=cuda PARALLEL=3 bash experiments/pebble_reward_vs_rl/run_diagnostic_suite.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -16,7 +16,7 @@ cd "$ROOT"
 source .venv/bin/activate
 export PYTHONPATH="${ROOT}:${ROOT}/custom_dmc2gym:${PYTHONPATH:-}"
 
-DEVICE="${DEVICE:-cpu}"
+DEVICE="${DEVICE:-cuda}"
 PARALLEL="${PARALLEL:-3}"
 STEPS="${STEPS:-100000}"
 SEEDS="${SEEDS:-1 2 3 4 5}"

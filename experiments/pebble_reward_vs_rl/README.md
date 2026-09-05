@@ -51,11 +51,13 @@ Repo dependency outside this folder: `replay_buffer.py` stores `true_rewards` fo
 
 ### Google Colab (A100) — recommended
 
-1. Open: [colab_a100.ipynb](https://colab.research.google.com/github/thatrandomasiandev/BPref/blob/main/experiments/pebble_reward_vs_rl/colab_a100.ipynb)
+1. Open a **fresh** copy from GitHub (not an old Drive autosave):  
+   [colab_a100.ipynb](https://colab.research.google.com/github/thatrandomasiandev/BPref/blob/main/experiments/pebble_reward_vs_rl/colab_a100.ipynb)
 2. **Runtime → Change runtime type → GPU → A100**
-3. Run all cells (Drive mount on → diagnostic → optional paper-scale)
+3. If a previous pip install failed in this VM: **Disconnect and delete runtime**, then reconnect
+4. Run cells in order. Cell 4 builds a Python 3.11 venv and pins `gym==0.26.2` (no unpinned gym fallback)
 
-Notebook path in-repo: `experiments/pebble_reward_vs_rl/colab_a100.ipynb`
+Code runs on `/content/BPref` (SSD). Outputs go to Drive `MyDrive/LiraLab/pebble_exp/`.
 
 ### Local (from BPref repo root, venv active)
 

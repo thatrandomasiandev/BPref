@@ -75,12 +75,12 @@ Code runs on `/content/BPref` (SSD). Outputs go to Drive `MyDrive/LiraLab/pebble
 # Wiring smoke (all four conditions) — NOT a finding
 DEVICE=cpu bash experiments/pebble_reward_vs_rl/run_smoke_all.sh
 
-# Diagnostic (tentative patterns only): 5 seeds × 100k
-DEVICE=cpu PARALLEL=3 STEPS=100000 SEEDS="1 2 3 4 5" \
+# Diagnostic (tentative patterns only): 5 seeds × 100k — A100 PARALLEL=3
+DEVICE=cuda PARALLEL=3 STEPS=100000 SEEDS="1 2 3 4 5" \
   python experiments/pebble_reward_vs_rl/run_diagnostic_suite.py
 
-# Paper-scale (CLAIM.md claim gate): 10 seeds × ≥500k — prefer CUDA/A100
-DEVICE=cuda PARALLEL=1 \
+# Paper-scale (CLAIM.md claim gate): 10 seeds × ≥500k — A100 PARALLEL=2
+DEVICE=cuda PARALLEL=2 \
   python experiments/pebble_reward_vs_rl/run_paper_scale_suite.py
 
 # Aggregate

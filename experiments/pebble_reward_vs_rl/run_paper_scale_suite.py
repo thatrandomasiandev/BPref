@@ -9,8 +9,10 @@ Prefer CUDA (Colab A100). Resume-safe: skips completed seed×condition folders.
 
 Usage:
 
-    DEVICE=cuda PARALLEL=1 STEPS=500000 SEEDS=\"1 2 3 4 5 6 7 8 9 10\" \\
+    DEVICE=cuda PARALLEL=2 STEPS=500000 SEEDS=\"1 2 3 4 5 6 7 8 9 10\" \\
       python experiments/pebble_reward_vs_rl/run_paper_scale_suite.py
+
+A100 defaults: DEVICE=cuda, PARALLEL=2 (wall-clock only; protocol unchanged).
 """
 
 from __future__ import annotations
@@ -24,7 +26,7 @@ from pathlib import Path
 # Paper defaults before importing the diagnostic orchestrator.
 os.environ.setdefault("STEPS", "500000")
 os.environ.setdefault("SEEDS", "1 2 3 4 5 6 7 8 9 10")
-os.environ.setdefault("PARALLEL", "1")
+os.environ.setdefault("PARALLEL", "2")  # A100 40GB; drop to 1 on OOM
 os.environ.setdefault("DEVICE", "cuda")
 
 ROOT = Path(__file__).resolve().parents[2]

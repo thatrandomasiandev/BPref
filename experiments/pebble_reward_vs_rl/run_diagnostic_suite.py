@@ -9,7 +9,10 @@ Produces *tentative patterns only* — not a paper-scale claim.
 
 Usage (from BPref repo root, venv active):
 
-    DEVICE=cpu PARALLEL=3 python experiments/pebble_reward_vs_rl/run_diagnostic_suite.py
+    DEVICE=cuda PARALLEL=3 python experiments/pebble_reward_vs_rl/run_diagnostic_suite.py
+
+A100 defaults below: DEVICE=cuda, PARALLEL=3 (wall-clock only; protocol unchanged).
+On CPU use DEVICE=cpu PARALLEL=3 (or lower).
 """
 
 from __future__ import annotations
@@ -90,8 +93,8 @@ def run_one(
 
 
 def main() -> int:
-    device = os.environ.get("DEVICE", "cpu")
-    parallel = int(os.environ.get("PARALLEL", "3"))
+    device = os.environ.get("DEVICE", "cuda")
+    parallel = int(os.environ.get("PARALLEL", "3"))  # A100: 3; drop to 2 on OOM
     steps = int(os.environ.get("STEPS", "100000"))
     env = os.environ.get("ENV", "walker_walk")
     seeds = [int(s) for s in os.environ.get("SEEDS", "1 2 3 4 5").split()]

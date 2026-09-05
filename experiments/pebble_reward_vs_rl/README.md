@@ -7,6 +7,12 @@
 
 **Not B-Pref.** Teacher = paper §5.1 scripted **Oracle**. Stress = PEBBLE’s own ablations.
 
+**Repo layout:** this directory is the **canonical, Colab-cloned** experiment tree
+(inside the BPref fork). On the LiraLab machine, `LiraLab/pebble/experiments/reward_vs_rl`
+is a symlink here; the paper PDF for local reading lives at `LiraLab/pebble/paper/`.
+Do **not** replace this directory with a symlink to `LiraLab/pebble/` — that path
+does not exist in a Colab clone of this repo.
+
 ---
 
 ## Claim (one sentence)
